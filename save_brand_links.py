@@ -1,4 +1,4 @@
-from DermaStore import Dermstore,AcneProduct
+from Dermstore import Dermstore,AcneProduct
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import time

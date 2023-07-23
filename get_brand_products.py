@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from filemgmt import read_from_csv
 from selenium.webdriver.common.by import By
-from DermaStore import Dermstore
+from Dermstore import Dermstore
 import json
 
 # open brands csv file
@@ -15,16 +15,13 @@ skincare_brands = read_from_csv('/Users/theodoreleeiv/AcneProducts/Data/skincare
 ### open each brand url link
 products = Dermstore()
 
-
-
 skincare_products = []
 ### iterate through the brand instances
 for skincare_brand in skincare_brands:
     brand = skincare_brand[0]
     brand_link = skincare_brand[1]
-    products.url = brand_link
     ### use selenium to open the brand url links
-    products.se_open_webpage_browser()
+    products.se_open_webpage_browser(brand_link)
 
     ### filter the page by product type
     facet_value_to_find = ['Moisturisers','Cleansers','Toners','Serums','Exfoliators+%26+Scrubs']
