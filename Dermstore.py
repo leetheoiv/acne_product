@@ -31,13 +31,15 @@ class AcneProduct:
 
 """ Class to scrape the dermstore website"""
 class Dermstore(AcneProduct):
-    def __init__(self,url=None):
+    def __init__(self,url=None,driver_on=True):
         self.url = url
+        self.driver_path = '/Users/theodoreleeiv/Documents/Documents - Theodore’s MacBook Pro/chromedriver'
         if self.url != None:
             r = requests.get(url)
             self.soup =  BeautifulSoup(r.content, 'html.parser')
-        self.driver_path = '/Users/theodoreleeiv/Documents/Documents - Theodore’s MacBook Pro/chromedriver'
-        self.driver = webdriver.Chrome(executable_path=self.driver_path)
+        if driver_on == True:
+            self.driver = webdriver.Chrome(executable_path=self.driver_path)
+            id = self.driver.session_id
         AcneProduct.__init__(self)
 
     # searches and returns the desired element using bs4
@@ -110,6 +112,10 @@ class Dermstore(AcneProduct):
     def get_product_html(self):
         html = self.driver.page_source
         return html
+
+    def close_page(self):
+        return self.driver.close()
+
 
 
 
