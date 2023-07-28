@@ -1,5 +1,5 @@
 from selenium import webdriver
-from selenium.common.exceptions import StaleElementReferenceException,NoSuchElementException
+from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -30,7 +30,7 @@ class AcneProduct:
         self.key_benefits = None # what are the benefits of the product
 
 """ Class to scrape the dermstore website"""
-class Dermstore(AcneProduct):
+class Dermstore:
     def __init__(self,url=None,driver_on=True):
         self.url = url
         self.driver_path = '/Users/theodoreleeiv/Documents/Documents - Theodore’s MacBook Pro/chromedriver'
@@ -39,8 +39,6 @@ class Dermstore(AcneProduct):
             self.soup =  BeautifulSoup(r.content, 'html.parser')
         if driver_on == True:
             self.driver = webdriver.Chrome(executable_path=self.driver_path)
-            id = self.driver.session_id
-        AcneProduct.__init__(self)
 
     # searches and returns the desired element using bs4
     def bs4_get_element(self,soup_func,new_soup=None,new_bs4=False):
@@ -58,13 +56,36 @@ class Dermstore(AcneProduct):
         return soup
 
     # opens a webpage using selenium
-    def se_open_webpage_browser(self,new_url=None):
-        if self.url == None:
-            self.driver.get(new_url)
-            time.sleep(1)
-        else:
-            self.driver.get(self.url)
-            time.sleep(1)
+    def se_open_webpage_browser(self, new_url=None):
+        max_attempts = 3  # Maximum number of attempts to find the body tag
+        attempt = 1
+
+        while attempt <= max_attempts:
+            try:
+                if self.url is None:
+                    self.driver.get(new_url)
+                else:
+                    self.driver.get(self.url)
+
+                self.driver.set_page_load_timeout(15)
+
+                # Wait until the body tag is found within 15 seconds
+                WebDriverWait(self.driver, 15).until(
+                    lambda driver: self.driver.find_element(By.TAG_NAME,'body')
+                )
+
+                # If the body tag is found, break out of the loop
+                break
+
+            except TimeoutException:
+                # If the body tag is not found within 15 seconds, refresh the page
+                self.driver.refresh()
+                attempt += 1
+                continue
+
+        if attempt > max_attempts:
+            print("Body tag not found after multiple attempts. Exiting.")
+            # Or raise an exception, handle it, or take appropriate action
 
     # searches and returns the desired element using selenium
     def se_get_element(self,by,value,multiple=False):
@@ -86,27 +107,20 @@ class Dermstore(AcneProduct):
         actions.perform()
 
     # checks for and closes promotional ads
-    def close_ad(self,max_attempts=3):
-        attempt = 0
-        while attempt < max_attempts:
-            try:
-                overlay = self.driver.find_element(By.ID, "attentive_overlay")
-                if overlay:
-                    # Use execute_script to set the "display" style property to "none"
-                    self.driver.execute_script("arguments[0].style.display = 'none';", overlay)
-                    print("Display set to none.")
-                    return
-            except NoSuchElementException:
-                continue
-            except StaleElementReferenceException:
-                attempt += 1
-
-        print("Failed to set display to none after multiple attempts.")
+    def close_ad(self):
         try:
-            # Wait for the "closeIconContainer" button to be clickable and click it
-            self.close_ad()
-        except Exception as e:
-            print("Error while clicking the element:", str(e))
+            overlay = self.driver.find_element(By.ID, "attentive_overlay")
+            if overlay:
+                # Use execute_script to set the "display" style property to "none"
+                self.driver.execute_script("arguments[0].style.display = 'none';", overlay)
+                print("Display set to none.")
+                return
+        except NoSuchElementException:
+            return
+        except:
+            print("Failed to set display to none after multiple attempts.")
+            return
+
 
     """ Returns the html of the current page"""
     def get_product_html(self):
